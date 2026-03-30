@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feature Development Estimator — FCA</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bm:#00346B;--bd:#00294F;--bl:#004A91;--b2:#66A9D9;--bs:#D4E7F5;
+  --t1:#2B2A29;--t2:#727271;--t3:#B3B3B2;
+  --brd:rgba(43,42,41,.10);--bri:rgba(43,42,41,.20);--fill:rgba(228,231,233,.40);
+  --g:#1BB161;--gl:rgba(27,177,97,.10);--a:#F59A00;--al:rgba(245,154,0,.10);
+  --r:#DF252A;--rl:rgba(223,37,42,.10);
+  --sh:0 2px 12px rgba(0,52,107,.10);--shl:0 8px 32px rgba(0,52,107,.15);--rad:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',sans-serif;background:#F0F4F8;color:var(--t1);min-height:100vh}
+nav{background:var(--bd);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:200}
+.nav-l{display:flex;align-items:center;gap:10px}
+.logo{width:30px;height:30px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--bm)}
+.nav-t{color:white;font-size:14px;font-weight:600}
+.nav-s{color:var(--b2);font-size:12px}
+.team-btn{display:flex;align-items:center;gap:6px;color:var(--b2);font-size:12px;font-weight:500;cursor:pointer;padding:6px 14px;border-radius:20px;border:1px solid rgba(102,169,217,.3);background:none;transition:all .2s}
+.team-btn:hover{background:rgba(102,169,217,.12);color:white}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 24px}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start}
+
+/* DRAWER */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,41,79,.45);z-index:300;backdrop-filter:blur(2px)}
+.overlay.on{display:block}
+.drawer{position:fixed;top:0;right:-440px;width:440px;height:100vh;background:white;z-index:400;box-shadow:-8px 0 40px rgba(0,52,107,.2);transition:right .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+.drawer.on{right:0}
+.drw-hdr{background:var(--bm);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drw-hdr h2{color:white;font-size:15px;font-weight:600}
+.drw-x{background:rgba(255,255,255,.15);border:none;color:white;width:30px;height:30px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.drw-x:hover{background:rgba(255,255,255,.28)}
+.drw-body{padding:20px;overflow-y:auto;flex:1}
+.sec-t{font-size:11px;font-weight:600;color:var(--bl);text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid var(--bs);padding-bottom:8px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.sec{margin-bottom:28px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;padding:7px 10px;text-align:left;background:rgba(231,231,231,.3);border-bottom:1px solid var(--brd)}
+.tbl td{padding:6px 8px;border-bottom:1px solid var(--brd);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.av-d{background:var(--bs);color:var(--bm)}.av-q{background:var(--gl);color:var(--g)}
+.t-empty{padding:16px;text-align:center;color:var(--t3);font-size:12px}
+
+/* INPUTS */
+.tbl input[type=text],.tbl input[type=number]{width:100%;height:34px;border:1px solid var(--bri);border-radius:6px;padding:0 10px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--t1);background:var(--fill);appearance:none;-webkit-appearance:none}
+.tbl input[type=number]{-moz-appearance:textfield;padding-right:32px}
+.tbl input[type=number]::-webkit-outer-spin-button,.tbl input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.tbl input:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(0,74,145,.12);background:white}
+.sp-wrap{position:relative}
+.sp-sfx{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--t3);pointer-events:none}
+
+/* BTNS */
+.btn{height:32px;border-radius:20px;border:none;font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;cursor:pointer;padding:0 14px;display:inline-flex;align-items:center;gap:5px;transition:all .2s}
+.btn-o{background:transparent;color:var(--bm);border:1px solid var(--bm)}.btn-o:hover{background:var(--bs)}
+.btn-g{background:var(--gl);color:var(--g);border:1px solid rgba(27,177,97,.3)}.btn-g:hover{background:rgba(27,177,97,.2)}
+.ico{background:none;border:none;cursor:pointer;width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:background .15s,color .15s;flex-shrink:0}
+.ico:hover{background:var(--rl);color:var(--r)}
+
+/* CHIP */
+.chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:600;text-transform:uppercase}
+.cfe{background:var(--al);color:var(--a)}.cbe{background:var(--bs);color:var(--bm)}.cqa{background:var(--gl);color:var(--g)}
+
+/* EPIC CARDS */
+.card{background:white;border-radius:var(--rad);box-shadow:var(--sh);overflow:hidden;margin-bottom:14px;border:1px solid var(--brd)}
+.epic-hdr{border-bottom:1px solid var(--brd);padding:11px 14px;display:flex;align-items:center;gap:10px}
+.enum{width:24px;height:24px;background:var(--bs);color:var(--bm);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.ename{flex:1;border:none;outline:none;font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;color:var(--t1);background:transparent}
+.ename::placeholder{color:var(--t3)}
+.epic-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.epic-input-wrap{position:relative}
+.epic-input{width:100%;height:36px;border:1px solid var(--bri);border-radius:6px;padding:0 44px 0 10px;font-family:'Poppins',sans-serif;font-size:13px;color:var(--t1);background:var(--fill);appearance:none;-webkit-appearance:none}
+.epic-input[type=number]{-moz-appearance:textfield}
+.epic-input[type=number]::-webkit-outer-spin-button,.epic-input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.epic-input:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(0,74,145,.12);background:white}
+.epic-sfx{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--t3);pointer-events:none}
+.fl{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+.pills{display:flex;flex-wrap:wrap;gap:7px}
+.pill{display:flex;align-items:center;gap:5px;padding:4px 9px 4px 5px;border:1px solid var(--bri);border-radius:20px;background:var(--fill);cursor:pointer;font-size:11px;font-weight:500;color:var(--t2);transition:all .15s;user-select:none}
+.pill:hover{border-color:var(--b2);color:var(--t1)}
+.pill.sd{background:var(--bs);border-color:var(--bm);color:var(--bm)}
+.pill.sq{background:var(--gl);border-color:var(--g);color:var(--g)}
+.pav{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;background:rgba(43,42,41,.12);color:var(--t2)}
+.pill.sd .pav{background:var(--bm);color:white}.pill.sq .pav{background:var(--g);color:white}
+.hint{font-size:11px;color:var(--t3);font-style:italic}
+.add-epic{width:100%;height:44px;background:white;border:2px dashed var(--b2);border-radius:var(--rad);color:var(--bm);font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.add-epic:hover{background:var(--bs);border-color:var(--bm)}
+
+/* RESULTS */
+.rp{background:var(--bd);border-radius:var(--rad);padding:18px;position:sticky;top:72px;box-shadow:var(--shl)}
+.rt{color:var(--bs);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+.re{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:11px 13px;margin-bottom:9px}
+.rn{color:white;font-size:12px;font-weight:600;margin-bottom:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow{display:flex;justify-content:space-between;padding:2px 0}
+.rl{color:var(--b2);font-size:11px}.rv{color:white;font-size:11px;font-weight:500}
+.rdiv{border:none;border-top:1px solid rgba(255,255,255,.08);margin:7px 0}
+.tot{background:var(--bm);border-radius:6px;padding:13px 15px;margin-top:12px}
+.tl{color:var(--b2);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.tv{color:white;font-size:21px;font-weight:600;margin-top:2px}
+.ts{color:var(--b2);font-size:11px;margin-top:2px}
+.r-empty{text-align:center;padding:24px 10px;color:rgba(255,255,255,.35);font-size:12px}
+.wm{margin-top:5px;padding:4px 8px;border-radius:4px;font-size:10px}
+.we{background:rgba(223,37,42,.15);color:#ff6b6b}.wy{background:rgba(245,154,0,.15);color:var(--a)}
+label{display:block;font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.rp{position:static}.g2{grid-template-columns:1fr}.drawer{width:100%;right:-100%}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-l">
+    <div class="logo">FCA</div>
+    <span class="nav-t">Feature Development Estimator</span>
+    <span class="nav-s">&nbsp;/&nbsp;Field Control Analytics</span>
+  </div>
+  <button class="team-btn" onclick="openDrawer()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Manage Team&nbsp;<span id="tc" style="background:rgba(102,169,217,.25);border-radius:10px;padding:1px 7px;font-size:10px">0</span>
+  </button>
+</nav>
+
+<div class="overlay" id="ov" onclick="closeDrawer()"></div>
+<div class="drawer" id="drw">
+  <div class="drw-hdr">
+    <h2>Team Roster</h2>
+    <button class="drw-x" onclick="closeDrawer()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drw-body">
+    <div class="sec">
+      <div class="sec-t">
+        <span>Developers</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-o" onclick="addDev('be')">+ Backend</button>
+          <button class="btn btn-o" onclick="addDev('fe')">+ Frontend</button>
+        </div>
+      </div>
+      <div id="dev-list"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-t">
+        <span>QA Engineers</span>
+        <button class="btn btn-g" onclick="addQA()">+ Add QA</button>
+      </div>
+      <div id="qa-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="layout">
+    <div>
+      <div id="epics-list"></div>
+      <button class="add-epic" onclick="addEpic()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+        Add Epic
+      </button>
+    </div>
+    <div>
+      <div class="rp">
+        <div class="rt">📊 Estimation Summary</div>
+        <div id="results"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+var devs = [], qas = [], epics = [], uid = 0;
+function nid(){ return ++uid; }
+function esc(s){ if(!s && s!==0) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ini(name, fb){ if(!name||!name.trim()) return fb||'?'; return name.trim().split(/\s+/).map(function(w){return w[0];}).join('').toUpperCase().slice(0,2); }
+function fName(name, fb){ if(!name||!name.trim()) return fb; return name.trim().split(' ')[0]; }
+
+// ── Drawer ─────────────────────────────────────────────────────────────────
+function openDrawer(){ document.getElementById('drw').classList.add('on'); document.getElementById('ov').classList.add('on'); }
+function closeDrawer(){ document.getElementById('drw').classList.remove('on'); document.getElementById('ov').classList.remove('on'); }
+
+// ── Team count ─────────────────────────────────────────────────────────────
+function syncCount(){ document.getElementById('tc').textContent = devs.length + qas.length; }
+
+// ── Developers ─────────────────────────────────────────────────────────────
+function addDev(type){
+  appendDevForm(type);
+}
+
+function appendDevForm(type){
+  var list = document.getElementById('dev-list');
+  var empty = list.querySelector('.t-empty');
+  if(empty) empty.remove();
+
+  var form = document.createElement('div');
+  form.dataset.pending = '1';
+  form.dataset.devtype = type;
+  form.style.cssText = 'display:grid;grid-template-columns:32px 1fr 80px 100px 30px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--brd);background:rgba(0,52,107,.03);border-radius:6px;';
+
+  var av = document.createElement('div');
+  av.className = 'av av-d';
+  av.textContent = type.toUpperCase();
+
+  var nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = 'First and last name';
+  nameInput.style.cssText = 'height:34px;border:1px solid var(--bri);border-radius:6px;padding:0 10px;font-family:Poppins,sans-serif;font-size:12px;color:var(--t1);background:var(--fill);width:100%;box-sizing:border-box';
+  nameInput.addEventListener('focus', function(){ this.style.borderColor='var(--bl)'; this.style.boxShadow='0 0 0 3px rgba(0,74,145,.12)'; this.style.background='white'; });
+  nameInput.addEventListener('blur',  function(){ this.style.borderColor='var(--bri)'; this.style.boxShadow='none'; this.style.background='var(--fill)'; });
+  nameInput.addEventListener('input', function(){ av.textContent = ini(this.value, type.toUpperCase()); });
+
+  var chip = document.createElement('span');
+  chip.className = 'chip ' + (type==='fe' ? 'cfe' : 'cbe');
+  chip.textContent = type==='fe' ? 'Frontend' : 'Backend';
+
+  var spWrap = document.createElement('div'); spWrap.style.position='relative';
+  var spInput = document.createElement('input');
+  spInput.type = 'number'; spInput.min = 1; spInput.max = 200; spInput.value = 20;
+  spInput.style.cssText = 'height:34px;border:1px solid var(--bri);border-radius:6px;padding:0 28px 0 10px;font-family:Poppins,sans-serif;font-size:12px;color:var(--t1);background:var(--fill);width:100%;box-sizing:border-box;-moz-appearance:textfield';
+  spInput.addEventListener('focus', function(){ this.style.borderColor='var(--bl)'; this.style.boxShadow='0 0 0 3px rgba(0,74,145,.12)'; this.style.background='white'; });
+  spInput.addEventListener('blur',  function(){ this.style.borderColor='var(--bri)'; this.style.boxShadow='none'; this.style.background='var(--fill)'; });
+  var spSfx = document.createElement('span'); spSfx.className='sp-sfx'; spSfx.textContent='SP';
+  spWrap.appendChild(spInput); spWrap.appendChild(spSfx);
+
+
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'ico';
+  cancelBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  cancelBtn.addEventListener('click', function(){
+    form.remove();
+    if(devs.length===0){ var list2=document.getElementById('dev-list'); if(!list2.querySelector('.t-empty')){ var e=document.createElement('div'); e.className='t-empty'; e.textContent='No developers yet.'; list2.appendChild(e); } }
+    maybeRemoveRosterSaveButton();
+  });
+
+  form.appendChild(av); form.appendChild(nameInput); form.appendChild(chip);
+  form.appendChild(spWrap); form.appendChild(cancelBtn);
+  list.appendChild(form);
+  ensureRosterSaveButton();
+  setTimeout(function(){ nameInput.focus(); }, 50);
+}
+
+function maybeRemoveRosterSaveButton(){
+  var pending = document.querySelectorAll('#dev-list [data-pending], #qa-list [data-pending]');
+  if(pending.length === 0){
+    var btn = document.querySelector('.drw-body .roster-save-btn');
+    if(btn) btn.remove();
+  }
+}
+
+function ensureRosterSaveButton(){
+  // Single Save button lives below the QA section in the drawer body
+  var drwBody = document.querySelector('.drw-body');
+  if(drwBody.querySelector('.roster-save-btn')) return;
+  var btn = document.createElement('button');
+  btn.className = 'roster-save-btn';
+  btn.textContent = 'Save Team';
+  btn.style.cssText = 'width:100%;height:40px;border-radius:20px;border:none;font-family:Poppins,sans-serif;font-size:13px;font-weight:600;cursor:pointer;padding:0 24px;background:var(--bm);color:white;transition:background .2s;display:block;margin-top:8px';
+  btn.addEventListener('mouseenter', function(){ this.style.background='var(--bl)'; });
+  btn.addEventListener('mouseleave', function(){ this.style.background='var(--bm)'; });
+  btn.addEventListener('click', function(){
+    // Save all pending devs
+    var devList = document.getElementById('dev-list');
+    devList.querySelectorAll('[data-pending]').forEach(function(form){
+      var nameInput = form.querySelector('input[type=text]');
+      var spInput = form.querySelector('input[type=number]');
+      var type = form.dataset.devtype;
+      var d = {id: nid(), name: nameInput.value.trim(), type: type, spOutput: parseFloat(spInput.value)||20};
+      devs.push(d);
+      form.remove();
+      appendDevRow(d);
+    });
+    if(devs.length===0 && !devList.querySelector('.t-empty')){ var e=document.createElement('div'); e.className='t-empty'; e.textContent='No developers yet.'; devList.appendChild(e); }
+    // Save all pending QAs
+    var qaList = document.getElementById('qa-list');
+    qaList.querySelectorAll('[data-pending]').forEach(function(form){
+      var nameInput = form.querySelector('input[type=text]');
+      var q = {id: nid(), name: nameInput.value.trim()};
+      qas.push(q);
+      form.remove();
+      appendQARow(q);
+    });
+    if(qas.length===0 && !qaList.querySelector('.t-empty')){ var e=document.createElement('div'); e.className='t-empty'; e.textContent='No QA engineers yet.'; qaList.appendChild(e); }
+    btn.remove();
+    syncCount();
+    renderEpics();
+  });
+  drwBody.appendChild(btn);
+}
+
+function appendDevRow(d){
+  var list = document.getElementById('dev-list');
+
+  // Remove empty state if present
+  var empty = list.querySelector('.t-empty');
+  if(empty) empty.remove();
+
+  var row = document.createElement('div');
+  row.dataset.id = d.id;
+  row.style.cssText = 'display:grid;grid-template-columns:32px 1fr 80px 100px 30px;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--brd)';
+
+  var av = document.createElement('div');
+  av.className = 'av av-d';
+  av.textContent = ini(d.name, d.type.toUpperCase());
+
+  var nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = 'First and last name';
+  nameInput.value = d.name;
+  nameInput.style.cssText = 'height:34px;border:1px solid var(--bri);border-radius:6px;padding:0 10px;font-family:Poppins,sans-serif;font-size:12px;color:var(--t1);background:var(--fill);width:100%;box-sizing:border-box';
+  nameInput.addEventListener('focus', function(){ this.style.outline='none'; this.style.borderColor='var(--bl)'; this.style.boxShadow='0 0 0 3px rgba(0,74,145,.12)'; this.style.background='white'; });
+  nameInput.addEventListener('blur', function(){ this.style.borderColor='var(--bri)'; this.style.boxShadow='none'; this.style.background='var(--fill)'; });
+  nameInput.addEventListener('input', function(){
+    d.name = this.value;
+    av.textContent = ini(d.name, d.type.toUpperCase());
+    syncCount();
+    refreshEpicPills();
+  });
+
+  var chip = document.createElement('span');
+  chip.className = 'chip ' + (d.type==='fe' ? 'cfe' : 'cbe');
+  chip.textContent = d.type==='fe' ? 'Frontend' : 'Backend';
+
+  var spWrap = document.createElement('div');
+  spWrap.className = 'sp-wrap';
+  spWrap.style.position = 'relative';
+  var spInput = document.createElement('input');
+  spInput.type = 'number';
+  spInput.min = 1; spInput.max = 200;
+  spInput.value = d.spOutput;
+  spInput.style.cssText = 'height:34px;border:1px solid var(--bri);border-radius:6px;padding:0 28px 0 10px;font-family:Poppins,sans-serif;font-size:12px;color:var(--t1);background:var(--fill);width:100%;box-sizing:border-box;-moz-appearance:textfield';
+  spInput.addEventListener('focus', function(){ this.style.outline='none'; this.style.borderColor='var(--bl)'; this.style.boxShadow='0 0 0 3px rgba(0,74,145,.12)'; this.style.background='white'; });
+  spInput.addEventListener('blur', function(){ this.style.borderColor='var(--bri)'; this.style.boxShadow='none'; this.style.background='var(--fill)'; });
+  spInput.addEventListener('input', function(){ d.spOutput = parseFloat(this.value)||0; renderResults(); });
+  var spSfx = document.createElement('span');
+  spSfx.className = 'sp-sfx';
+  spSfx.textContent = 'SP';
+  spWrap.appendChild(spInput);
+  spWrap.appendChild(spSfx);
+
+  var delBtn = document.createElement('button');
+  delBtn.className = 'ico';
+  delBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  delBtn.addEventListener('click', function(){ removeDev(d.id); });
+
+  row.appendChild(av);
+  row.appendChild(nameInput);
+  row.appendChild(chip);
+  row.appendChild(spWrap);
+  row.appendChild(delBtn);
+  list.appendChild(row);
+}
+
+function removeDev(id){
+  devs = devs.filter(function(d){ return d.id !== id; });
+  epics.forEach(function(e){ e.dids = e.dids.filter(function(x){ return x !== id; }); });
+  var row = document.querySelector('#dev-list [data-id="'+id+'"]');
+  if(row) row.remove();
+  if(devs.length === 0){
+    var list = document.getElementById('dev-list');
+    var empty = document.createElement('div');
+    empty.className = 't-empty';
+    empty.textContent = 'No developers yet.';
+    list.appendChild(empty);
+  }
+  syncCount();
+  renderEpics();
+}
+
+// ── QA ─────────────────────────────────────────────────────────────────────
+function addQA(){
+  appendQAForm();
+}
+
+function appendQAForm(){
+  var list = document.getElementById('qa-list');
+  var empty = list.querySelector('.t-empty');
+  if(empty) empty.remove();
+
+  var form = document.createElement('div');
+  form.dataset.pending = '1';
+  form.style.cssText = 'display:grid;grid-template-columns:32px 1fr 80px 30px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--brd);background:rgba(0,52,107,.03);border-radius:6px;';
+
+  var av = document.createElement('div');
+  av.className = 'av av-q';
+  av.textContent = 'QA';
+
+  var nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = 'First and last name';
+  nameInput.style.cssText = 'height:34px;border:1px solid var(--bri);border-radius:6px;padding:0 10px;font-family:Poppins,sans-serif;font-size:12px;color:var(--t1);background:var(--fill);width:100%;box-sizing:border-box';
+  nameInput.addEventListener('focus', function(){ this.style.borderColor='var(--bl)'; this.style.boxShadow='0 0 0 3px rgba(0,74,145,.12)'; this.style.background='white'; });
+  nameInput.addEventListener('blur',  function(){ this.style.borderColor='var(--bri)'; this.style.boxShadow='none'; this.style.background='var(--fill)'; });
+  nameInput.addEventListener('input', function(){ av.textContent = ini(this.value, 'QA'); });
+
+
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'ico';
+  cancelBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  cancelBtn.addEventListener('click', function(){
+    form.remove();
+    if(qas.length===0){ var list2=document.getElementById('qa-list'); if(!list2.querySelector('.t-empty')){ var e=document.createElement('div'); e.className='t-empty'; e.textContent='No QA engineers yet.'; list2.appendChild(e); } }
+    maybeRemoveRosterSaveButton();
+  });
+
+  form.appendChild(av); form.appendChild(nameInput);
+  form.appendChild(cancelBtn);
+  list.appendChild(form);
+  ensureRosterSaveButton();
+  setTimeout(function(){ nameInput.focus(); }, 50);
+}
+
+function appendQARow(q){
+  var list = document.getElementById('qa-list');
+  var empty = list.querySelector('.t-empty');
+  if(empty) empty.remove();
+
+  var row = document.createElement('div');
+  row.dataset.id = q.id;
+  row.style.cssText = 'display:grid;grid-template-columns:32px 1fr 30px;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--brd)';
+
+  var av = document.createElement('div');
+  av.className = 'av av-q';
+  av.textContent = ini(q.name, 'QA');
+
+  var nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = 'First and last name';
+  nameInput.value = q.name;
+  nameInput.style.cssText = 'height:34px;border:1px solid var(--bri);border-radius:6px;padding:0 10px;font-family:Poppins,sans-serif;font-size:12px;color:var(--t1);background:var(--fill);width:100%;box-sizing:border-box';
+  nameInput.addEventListener('focus', function(){ this.style.outline='none'; this.style.borderColor='var(--bl)'; this.style.boxShadow='0 0 0 3px rgba(0,74,145,.12)'; this.style.background='white'; });
+  nameInput.addEventListener('blur', function(){ this.style.borderColor='var(--bri)'; this.style.boxShadow='none'; this.style.background='var(--fill)'; });
+  nameInput.addEventListener('input', function(){
+    q.name = this.value;
+    av.textContent = ini(q.name, 'QA');
+    syncCount();
+    refreshEpicPills();
+  });
+
+  var delBtn = document.createElement('button');
+  delBtn.className = 'ico';
+  delBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  delBtn.addEventListener('click', function(){ removeQA(q.id); });
+
+  row.appendChild(av);
+  row.appendChild(nameInput);
+  row.appendChild(delBtn);
+  list.appendChild(row);
+}
+
+function removeQA(id){
+  qas = qas.filter(function(q){ return q.id !== id; });
+  epics.forEach(function(e){ e.qids = e.qids.filter(function(x){ return x !== id; }); });
+  var row = document.querySelector('#qa-list [data-id="'+id+'"]');
+  if(row) row.remove();
+  if(qas.length === 0){
+    var list = document.getElementById('qa-list');
+    var empty = document.createElement('div');
+    empty.className = 't-empty';
+    empty.textContent = 'No QA engineers yet.';
+    list.appendChild(empty);
+  }
+  syncCount();
+  renderEpics();
+}
+
+// ── Epics ──────────────────────────────────────────────────────────────────
+function addEpic(){
+  var ep = {id: nid(), name:'', sp:'', qas:'', dids:[], qids:[]};
+  epics.push(ep);
+  appendEpicCard(ep);
+  renderResults();
+  setTimeout(function(){
+    var cards = document.querySelectorAll('.card');
+    if(cards.length) cards[cards.length-1].scrollIntoView({behavior:'smooth',block:'start'});
+  }, 50);
+}
+
+function appendEpicCard(ep){
+  var list = document.getElementById('epics-list');
+  var empty = list.querySelector('.ep-empty');
+  if(empty) empty.remove();
+
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.eid = ep.id;
+
+  // Header
+  var hdr = document.createElement('div');
+  hdr.className = 'epic-hdr';
+  var num = document.createElement('div');
+  num.className = 'enum';
+  num.textContent = epics.length;
+  var nameIn = document.createElement('input');
+  nameIn.className = 'ename';
+  nameIn.type = 'text';
+  nameIn.placeholder = 'Epic name…';
+  nameIn.value = ep.name;
+  nameIn.addEventListener('input', function(){ ep.name = this.value; renderResults(); });
+  var delBtn = document.createElement('button');
+  delBtn.className = 'ico';
+  delBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>';
+  delBtn.addEventListener('click', function(){ removeEpic(ep.id); });
+  hdr.appendChild(num);
+  hdr.appendChild(nameIn);
+  hdr.appendChild(delBtn);
+
+  // Body
+  var body = document.createElement('div');
+  body.className = 'epic-body';
+
+  // SP + QA row
+  var g2 = document.createElement('div');
+  g2.className = 'g2';
+  var spDiv = document.createElement('div');
+  spDiv.innerHTML = '<label>Total Story Points</label>';
+  var spWrap = document.createElement('div');
+  spWrap.className = 'epic-input-wrap';
+  var spIn = document.createElement('input');
+  spIn.className = 'epic-input';
+  spIn.type = 'number'; spIn.min = 1; spIn.placeholder = 'e.g. 80';
+  spIn.value = ep.sp;
+  spIn.addEventListener('input', function(){ ep.sp = this.value; renderResults(); });
+  var spSfx = document.createElement('span');
+  spSfx.className = 'epic-sfx'; spSfx.textContent = 'SP';
+  spWrap.appendChild(spIn); spWrap.appendChild(spSfx);
+  spDiv.appendChild(spWrap);
+
+  var qaDiv = document.createElement('div');
+  qaDiv.innerHTML = '<label>QA Time</label>';
+  var qaWrap = document.createElement('div');
+  qaWrap.className = 'epic-input-wrap';
+  var qaIn = document.createElement('input');
+  qaIn.className = 'epic-input';
+  qaIn.type = 'number'; qaIn.min = 0; qaIn.step = 0.5; qaIn.placeholder = 'e.g. 2';
+  qaIn.value = ep.qas;
+  qaIn.addEventListener('input', function(){ ep.qas = this.value; renderResults(); });
+  var qaSfx = document.createElement('span');
+  qaSfx.className = 'epic-sfx'; qaSfx.textContent = 'sprints';
+  qaWrap.appendChild(qaIn); qaWrap.appendChild(qaSfx);
+  qaDiv.appendChild(qaWrap);
+
+  g2.appendChild(spDiv); g2.appendChild(qaDiv);
+
+  // Dev pills section
+  var devSec = document.createElement('div');
+  devSec.dataset.section = 'devs';
+  var devLbl = document.createElement('div'); devLbl.className = 'fl'; devLbl.textContent = 'Assign Developers';
+  var devPills = document.createElement('div'); devPills.className = 'pills'; devPills.dataset.role = 'd';
+  devSec.appendChild(devLbl); devSec.appendChild(devPills);
+
+  // QA pills section
+  var qaSec = document.createElement('div');
+  qaSec.dataset.section = 'qas';
+  var qaLbl = document.createElement('div'); qaLbl.className = 'fl'; qaLbl.textContent = 'Assign QA';
+  var qaPills = document.createElement('div'); qaPills.className = 'pills'; qaPills.dataset.role = 'q';
+  qaSec.appendChild(qaLbl); qaSec.appendChild(qaPills);
+
+  body.appendChild(g2);
+  body.appendChild(devSec);
+  body.appendChild(qaSec);
+  card.appendChild(hdr);
+  card.appendChild(body);
+  list.appendChild(card);
+
+  // Populate pills
+  rebuildPillsForEpic(card, ep);
+}
+
+function rebuildPillsForEpic(card, ep){
+  var devPills = card.querySelector('.pills[data-role="d"]');
+  var qaPills = card.querySelector('.pills[data-role="q"]');
+
+  devPills.innerHTML = '';
+  if(devs.length === 0){
+    devPills.innerHTML = '<span class="hint">Add developers via Manage Team.</span>';
+  } else {
+    devs.forEach(function(d){
+      var sel = ep.dids.indexOf(d.id) !== -1;
+      var p = document.createElement('div');
+      p.className = 'pill' + (sel ? ' sd' : '');
+      p.dataset.mid = d.id;
+      var pav = document.createElement('div'); pav.className = 'pav'; pav.textContent = ini(d.name, d.type.toUpperCase());
+      var lbl = document.createElement('span'); lbl.className = 'plbl'; lbl.textContent = fName(d.name, d.type==='fe'?'FE Dev':'BE Dev');
+      var chip = document.createElement('span'); chip.className = 'chip '+(d.type==='fe'?'cfe':'cbe'); chip.style.cssText='padding:1px 5px;font-size:8px'; chip.textContent = d.type.toUpperCase();
+      p.appendChild(pav); p.appendChild(lbl); p.appendChild(chip);
+      p.addEventListener('click', function(){ toggleAssign(ep, d.id, 'd', p); });
+      devPills.appendChild(p);
+    });
+  }
+
+  qaPills.innerHTML = '';
+  if(qas.length === 0){
+    qaPills.innerHTML = '<span class="hint">Add QA engineers via Manage Team.</span>';
+  } else {
+    qas.forEach(function(q){
+      var sel = ep.qids.indexOf(q.id) !== -1;
+      var p = document.createElement('div');
+      p.className = 'pill' + (sel ? ' sq' : '');
+      p.dataset.mid = q.id;
+      var pav = document.createElement('div'); pav.className = 'pav'; pav.textContent = ini(q.name, 'QA');
+      var lbl = document.createElement('span'); lbl.className = 'plbl'; lbl.textContent = fName(q.name, 'QA');
+      var chip = document.createElement('span'); chip.className = 'chip cqa'; chip.style.cssText='padding:1px 5px;font-size:8px'; chip.textContent = 'QA';
+      p.appendChild(pav); p.appendChild(lbl); p.appendChild(chip);
+      p.addEventListener('click', function(){ toggleAssign(ep, q.id, 'q', p); });
+      qaPills.appendChild(p);
+    });
+  }
+}
+
+function toggleAssign(ep, mid, role, pillEl){
+  var arr = role==='d' ? ep.dids : ep.qids;
+  var cls = role==='d' ? 'sd' : 'sq';
+  var idx = arr.indexOf(mid);
+  if(idx===-1){ arr.push(mid); pillEl.classList.add(cls); pillEl.querySelector('.pav').style.background = role==='d' ? 'var(--bm)' : 'var(--g)'; pillEl.querySelector('.pav').style.color='white'; }
+  else{ arr.splice(idx,1); pillEl.classList.remove(cls); pillEl.querySelector('.pav').style.background=''; pillEl.querySelector('.pav').style.color=''; }
+  renderResults();
+}
+
+function removeEpic(id){
+  epics = epics.filter(function(e){ return e.id !== id; });
+  var card = document.querySelector('.card[data-eid="'+id+'"]');
+  if(card) card.remove();
+  // re-number
+  document.querySelectorAll('.card[data-eid]').forEach(function(c,i){ c.querySelector('.enum').textContent = i+1; });
+  if(epics.length === 0){
+    var list = document.getElementById('epics-list');
+    var d = document.createElement('div');
+    d.className = 'ep-empty';
+    d.style.cssText = 'text-align:center;padding:40px 0;color:var(--t3);font-size:13px';
+    d.textContent = 'No epics yet — add one below.';
+    list.appendChild(d);
+  }
+  renderResults();
+}
+
+// Refresh pill labels without rebuilding epics
+function refreshEpicPills(){
+  document.querySelectorAll('.card[data-eid]').forEach(function(card){
+    var eid = parseInt(card.dataset.eid);
+    var ep = epics.find(function(e){ return e.id===eid; });
+    if(!ep) return;
+    card.querySelectorAll('.pill[data-mid]').forEach(function(p){
+      var mid = parseInt(p.dataset.mid);
+      var role = p.closest('.pills').dataset.role;
+      if(role==='d'){
+        var d = devs.find(function(x){ return x.id===mid; });
+        if(d){ p.querySelector('.pav').textContent=ini(d.name,d.type.toUpperCase()); p.querySelector('.plbl').textContent=fName(d.name,d.type==='fe'?'FE Dev':'BE Dev'); }
+      } else {
+        var q = qas.find(function(x){ return x.id===mid; });
+        if(q){ p.querySelector('.pav').textContent=ini(q.name,'QA'); p.querySelector('.plbl').textContent=fName(q.name,'QA'); }
+      }
+    });
+  });
+}
+
+// Full epic re-render (only called when team members are added/removed)
+function renderEpics(){
+  document.querySelectorAll('.card[data-eid]').forEach(function(card){
+    var eid = parseInt(card.dataset.eid);
+    var ep = epics.find(function(e){ return e.id===eid; });
+    if(ep) rebuildPillsForEpic(card, ep);
+  });
+  renderResults();
+}
+
+// ── Results ────────────────────────────────────────────────────────────────
+function renderResults(){
+  var el = document.getElementById('results');
+  if(epics.length===0){ el.innerHTML='<div class="r-empty">📋<br>Add epics to see estimates</div>'; return; }
+  var html='', gDays=0, gSp=0;
+  epics.forEach(function(ep, i){
+    var aDevs = devs.filter(function(d){ return ep.dids.indexOf(d.id)!==-1; });
+    var out = aDevs.reduce(function(s,d){ return s+(parseFloat(d.spOutput)||0); }, 0);
+    var sp = parseFloat(ep.sp)||null;
+    var qsp = parseFloat(ep.qas)||0;
+    var dSpr = (sp && out>0) ? sp/out : null;
+    var tSpr = dSpr!==null ? dSpr+qsp : null;
+    var days = tSpr!==null ? tSpr*14 : null;
+    if(days) gDays+=days;
+    if(sp) gSp+=sp;
+    var name = (ep.name&&ep.name.trim()) ? ep.name : 'Epic '+(i+1);
+    html += '<div class="re"><div class="rn">'+esc(name)+'</div>';
+    if(!ep.sp){ html+='<div style="color:rgba(255,255,255,.3);font-size:11px">Enter story points</div>'; }
+    else if(!ep.dids.length||!dSpr){ html+='<div style="color:rgba(255,255,255,.3);font-size:11px">Assign developers to calculate</div>'; }
+    else{
+      html+='<div class="rrow"><span class="rl">Story Points</span><span class="rv">'+Math.round(sp)+' SP</span></div>';
+      html+='<div class="rrow"><span class="rl">Dev Time</span><span class="rv">'+dSpr.toFixed(1)+' sprints</span></div>';
+      html+='<div class="rrow"><span class="rl">QA Time</span><span class="rv">'+(qsp?qsp+' sprints':'—')+'</span></div>';
+      html+='<hr class="rdiv">';
+      html+='<div class="rrow"><span class="rl">Total</span><span class="rv" style="color:#66A9D9;font-weight:600">'+tSpr.toFixed(1)+' sprints</span></div>';
+      html+='<div class="rrow"><span class="rl">Calendar Days</span><span class="rv">~'+Math.round(days)+' days</span></div>';
+      if(!ep.qids.length) html+='<div class="wm we">⚠ No QA assigned</div>';
+      if(!ep.qas) html+='<div class="wm wy">⚠ No QA time set</div>';
+    }
+    html+='</div>';
+  });
+  if(gDays>0) html+='<div class="tot"><div class="tl">Total Estimate</div><div class="tv">'+((gDays/14).toFixed(1))+' sprints</div><div class="ts">~'+Math.round(gDays)+' days · '+((gDays/30).toFixed(1))+' months · '+Math.round(gSp)+' SP</div></div>';
+  el.innerHTML = html;
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.getElementById('dev-list').innerHTML = '<div class="t-empty">No developers yet.</div>';
+document.getElementById('qa-list').innerHTML  = '<div class="t-empty">No QA engineers yet.</div>';
+document.getElementById('epics-list').innerHTML = '<div class="ep-empty" style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">No epics yet — add one below.</div>';
+renderResults();
+</script>
+</body>
+</html>
