@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/data-content",
+      "destination": "/api/data-content.js"
+    }
+  ]
+}
