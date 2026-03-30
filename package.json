@@ -1,11 +1,7 @@
 {
-  "name": "feature-development-estimator",
-  "version": "1.0.0",
-  "dependencies": {
-    "@prisma/client": "^5.0.0",
-    "prisma": "^5.0.0"
-  },
-  "scripts": {
-    "postinstall": "prisma generate"
-  }
+    "name": "feature-development-estimator",
+    "version": "1.0.0",
+    "dependencies": {
+        "pg": "^8.11.3"
+    }
 }
