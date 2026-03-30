@@ -181,6 +181,31 @@ function esc(s){ if(!s && s!==0) return ''; return String(s).replace(/&/g,'&amp;
 function ini(name, fb){ if(!name||!name.trim()) return fb||'?'; return name.trim().split(/\s+/).map(function(w){return w[0];}).join('').toUpperCase().slice(0,2); }
 function fName(name, fb){ if(!name||!name.trim()) return fb; return name.trim().split(' ')[0]; }
 
+
+const API = 'https://featuredevelopmentestimator.vercel.app/api/data-content';
+
+async function loadData(){
+  try {
+    var res = await fetch(API);
+    var data = await res.json();
+    if(data.devs) data.devs.forEach(function(d){ devs.push(d); if(d.id>=uid) uid=d.id; appendDevRow(d); });
+    if(data.qas)  data.qas.forEach(function(q){  qas.push(q);  if(q.id>=uid) uid=q.id; appendQARow(q); });
+    if(data.epics) data.epics.forEach(function(ep){ if(ep.id>=uid) uid=ep.id; epics.push(ep); appendEpicCard(ep); });
+    syncCount();
+    renderResults();
+  } catch(e){ console.error('Load failed', e); }
+}
+
+async function saveData(){
+  try {
+    await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ devs: devs, qas: qas, epics: epics })
+    });
+  } catch(e){ console.error('Save failed', e); }
+}
+
 // ── Drawer ─────────────────────────────────────────────────────────────────
 function openDrawer(){ document.getElementById('drw').classList.add('on'); document.getElementById('ov').classList.add('on'); }
 function closeDrawer(){ document.getElementById('drw').classList.remove('on'); document.getElementById('ov').classList.remove('on'); }
@@ -290,6 +315,7 @@ function ensureRosterSaveButton(){
     btn.remove();
     syncCount();
     renderEpics();
+    saveData();
   });
   drwBody.appendChild(btn);
 }
@@ -360,6 +386,7 @@ function appendDevRow(d){
 function removeDev(id){
   devs = devs.filter(function(d){ return d.id !== id; });
   epics.forEach(function(e){ e.dids = e.dids.filter(function(x){ return x !== id; }); });
+  saveData();
   var row = document.querySelector('#dev-list [data-id="'+id+'"]');
   if(row) row.remove();
   if(devs.length === 0){
@@ -458,6 +485,7 @@ function appendQARow(q){
 function removeQA(id){
   qas = qas.filter(function(q){ return q.id !== id; });
   epics.forEach(function(e){ e.qids = e.qids.filter(function(x){ return x !== id; }); });
+  saveData();
   var row = document.querySelector('#qa-list [data-id="'+id+'"]');
   if(row) row.remove();
   if(qas.length === 0){
@@ -622,6 +650,7 @@ function toggleAssign(ep, mid, role, pillEl){
   if(idx===-1){ arr.push(mid); pillEl.classList.add(cls); pillEl.querySelector('.pav').style.background = role==='d' ? 'var(--bm)' : 'var(--g)'; pillEl.querySelector('.pav').style.color='white'; }
   else{ arr.splice(idx,1); pillEl.classList.remove(cls); pillEl.querySelector('.pav').style.background=''; pillEl.querySelector('.pav').style.color=''; }
   renderResults();
+  saveData();
 }
 
 function removeEpic(id){
@@ -669,6 +698,7 @@ function renderEpics(){
     if(ep) rebuildPillsForEpic(card, ep);
   });
   renderResults();
+  saveData();
 }
 
 // ── Results ────────────────────────────────────────────────────────────────
@@ -710,7 +740,7 @@ function renderResults(){
 document.getElementById('dev-list').innerHTML = '<div class="t-empty">No developers yet.</div>';
 document.getElementById('qa-list').innerHTML  = '<div class="t-empty">No QA engineers yet.</div>';
 document.getElementById('epics-list').innerHTML = '<div class="ep-empty" style="text-align:center;padding:40px 0;color:var(--t3);font-size:13px">No epics yet — add one below.</div>';
-renderResults();
+loadData();
 </script>
 </body>
 </html>
