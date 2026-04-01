@@ -315,7 +315,7 @@ function appendDevRow(d){
   var list=document.getElementById('dev-list');
   var empty=list.querySelector('.t-empty');if(empty)empty.remove();
   var row=document.createElement('div');row.dataset.id=d.id;
-  row.style.cssText='display:grid;grid-template-columns:28px 1fr 90px 30px;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--brd)';
+  row.style.cssText='display:grid;grid-template-columns:28px 1fr 52px 90px 30px;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--brd)';
   var av=document.createElement('div');av.className='av av-d';av.textContent=ini(d.name,d.type.toUpperCase());
   var ni=document.createElement('input');ni.type='text';ni.placeholder='First and last name';ni.value=d.name;
   ni.style.cssText='height:32px;border:1px solid var(--bri);border-radius:6px;padding:0 9px;font-family:Poppins,sans-serif;font-size:12px;color:var(--t1);background:var(--fill);width:100%;box-sizing:border-box';
@@ -335,7 +335,10 @@ function appendDevRow(d){
   var del=document.createElement('button');del.className='ico';
   del.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>';
   del.addEventListener('click',function(){removeDev(d.id);});
-  row.appendChild(av);row.appendChild(ni);row.appendChild(spw);row.appendChild(del);
+  var chip=document.createElement('span');
+  chip.className='chip '+(d.type==='fe'?'cfe':d.type==='mob'?'cmob':'cbe');
+  chip.textContent=d.type==='fe'?'FE':d.type==='mob'?'MOB':'BE';
+  row.appendChild(av);row.appendChild(ni);row.appendChild(chip);row.appendChild(spw);row.appendChild(del);
   list.appendChild(row);
 }
 
