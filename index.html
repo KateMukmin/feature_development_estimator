@@ -115,6 +115,12 @@ label{display:block;font-size:11px;font-weight:600;color:var(--t2);text-transfor
 .r-empty{text-align:center;padding:24px 10px;color:rgba(255,255,255,.35);font-size:12px}
 .wm{margin-top:5px;padding:4px 8px;border-radius:4px;font-size:10px}
 .we{background:rgba(223,37,42,.15);color:#ff6b6b}.wy{background:rgba(245,154,0,.15);color:var(--a)}
+.feat-hdr{cursor:pointer}
+.feat-hdr:hover .collapse-ico{color:var(--bm)}
+.collapse-ico{transition:transform .2s;color:var(--t3);flex-shrink:0;margin-right:2px}
+.collapse-ico.open{transform:rotate(180deg)}
+.feat-body{overflow:hidden;transition:max-height .25s ease}
+.feat-body.collapsed{display:none}
 @media(max-width:1000px){.layout{grid-template-columns:1fr}.rp{position:static}.g2,.g3,.g4{grid-template-columns:1fr 1fr}.drawer{width:100%;right:-100%}}
 </style>
 </head>
@@ -465,10 +471,18 @@ function appendFeatureCard(f,tab){
     var num=document.createElement('div');num.className='fnum';num.textContent=(tab==='sp'?spFeatures:sprFeatures).length;
     var ni=document.createElement('input');ni.className='fname';ni.type='text';ni.placeholder='Feature name…';ni.value=f.name;
     ni.addEventListener('input',function(){f.name=this.value;renderResults(tabKey);debounceSave();});
+    var chevron=document.createElement('span');chevron.className='collapse-ico open';
+    chevron.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
     var delBtn=document.createElement('button');delBtn.className='ico';
     delBtn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>';
-    delBtn.addEventListener('click',function(){removeFeature(f.id,tabKey);});
-    hdr.appendChild(num);hdr.appendChild(ni);hdr.appendChild(delBtn);
+    delBtn.addEventListener('click',function(e){e.stopPropagation();removeFeature(f.id,tabKey);});
+    hdr.appendChild(num);hdr.appendChild(ni);hdr.appendChild(chevron);hdr.appendChild(delBtn);
+    hdr.addEventListener('click',function(e){
+      if(e.target===ni||e.target===delBtn||delBtn.contains(e.target))return;
+      var body=card.querySelector('.feat-body');
+      var isCollapsed=body.classList.toggle('collapsed');
+      chevron.classList.toggle('open',!isCollapsed);
+    });
 
     var body=document.createElement('div');body.className='feat-body';
 
@@ -680,23 +694,24 @@ function renderResults(tab){
   var el=document.getElementById('res-'+tab);
   var arr=tab==='sp'?spFeatures:sprFeatures;
   if(arr.length===0){el.innerHTML='<div class="r-empty">📋<br>Add features to see estimates</div>';return;}
-  var html='',gSpr=0,gDays=0;
-  var arr=tab==='sp'?spFeatures:sprFeatures;
+  var html='',gSpr=0,gDays=0,gValid=0;
   arr.forEach(function(f,i){
     var r=tab==='sp'?calcSP(f):calcSPR(f);
     var name=(f.name&&f.name.trim())?f.name:'Feature '+(i+1);
-    html+='<div class="re"><div class="rn">'+esc(name)+'</div>';
+    html+='<div class="re">';
+    html+='<div class="rn">'+esc(name)+'</div>';
     if(!r){
-      var msg=tab==='sp'?'Enter SP and assign developers':'Enter sprints';
+      var msg=tab==='sp'?'Enter SP per track':'Enter sprints per track';
       html+='<div style="color:rgba(255,255,255,.3);font-size:11px">'+msg+'</div>';
     } else {
+      gValid++;
       gSpr+=r.totalBuf;gDays+=r.daysBuf;
       r.tracks.forEach(function(t){
         html+='<div class="rrow"><span class="rl">'+t.name+' Dev</span><span class="rv">'+t.spr.toFixed(1)+' spr</span></div>';
       });
       html+='<div class="rrow"><span class="rl">QA</span><span class="rv">'+(r.qa?r.qa+' spr':'—')+'</span></div>';
       html+='<hr class="rdiv">';
-      html+='<div class="rrow"><span class="rl">Dev Time</span><span class="rv">'+r.devTime.toFixed(1)+' spr</span></div>';
+      html+='<div class="rrow"><span class="rl">Dev Time ('+(f.mode==='parallel'?'parallel':'sequential')+')</span><span class="rv">'+r.devTime.toFixed(1)+' spr</span></div>';
       html+='<div class="rrow"><span class="rl">Total</span><span class="rv" style="color:#66A9D9;font-weight:600">'+r.total.toFixed(1)+' spr</span></div>';
       if(r.sp)html+='<div class="rrow"><span class="rl">Story Points</span><span class="rv">~'+Math.round(r.sp)+' SP</span></div>';
       if(f.buffer>0)html+='<div class="rrow"><span class="rl">With '+f.buffer+'% buffer</span><span class="rv" style="color:#fcd34d;font-weight:600">'+r.totalBuf.toFixed(1)+' spr</span></div>';
@@ -706,7 +721,9 @@ function renderResults(tab){
     }
     html+='</div>';
   });
-  if(gSpr>0)html+='<div class="tot"><div class="tl">Total Estimate</div><div class="tv">'+gSpr.toFixed(1)+' sprints</div><div class="ts">~'+gDays+' days · '+(gDays/30).toFixed(1)+' months</div></div>';
+  if(gValid>1){
+    html+='<div class="tot"><div class="tl">Grand Total ('+gValid+' features)</div><div class="tv">'+gSpr.toFixed(1)+' sprints</div><div class="ts">~'+gDays+' days · '+(gDays/30).toFixed(1)+' months</div></div>';
+  }
   el.innerHTML=html;
 }
 
