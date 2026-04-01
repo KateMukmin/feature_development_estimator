@@ -434,10 +434,10 @@ function maybeRemoveSaveBtn(){
 function addFeature(tab){
   var f;
   if(tab==='sp'){
-    f={id:nid(),name:'',beSP:'',feSP:'',mobSP:'',qaSpr:'',buffer:0,mode:'parallel',dids:[],qids:[]};
+    f={id:nid(),name:'',beSP:'',feSP:'',mobSP:'',qaSpr:'',buffer:0,mode:'parallel',dids:[],qids:[],inGT:false};
     spFeatures.push(f);
   } else {
-    f={id:nid(),name:'',beSpr:'',feSpr:'',mobSpr:'',qaSpr:'',buffer:0,mode:'parallel',dids:[],qids:[]};
+    f={id:nid(),name:'',beSpr:'',feSpr:'',mobSpr:'',qaSpr:'',buffer:0,mode:'parallel',dids:[],qids:[],inGT:false};
     sprFeatures.push(f);
   }
   appendFeatureCard(f,tab);
@@ -476,7 +476,16 @@ function appendFeatureCard(f,tab){
     var delBtn=document.createElement('button');delBtn.className='ico';
     delBtn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>';
     delBtn.addEventListener('click',function(e){e.stopPropagation();removeFeature(f.id,tabKey);});
-    hdr.appendChild(num);hdr.appendChild(ni);hdr.appendChild(chevron);hdr.appendChild(delBtn);
+    var gtWrap=document.createElement('label');
+    gtWrap.title='Include in Grand Total';
+    gtWrap.style.cssText='display:flex;align-items:center;gap:4px;cursor:pointer;flex-shrink:0;font-size:10px;font-weight:600;color:var(--t3);user-select:none;padding:0 4px';
+    gtWrap.addEventListener('click',function(e){e.stopPropagation();});
+    var gtChk=document.createElement('input');gtChk.type='checkbox';gtChk.checked=f.inGT||false;
+    gtChk.style.cssText='cursor:pointer;accent-color:var(--bm);width:13px;height:13px';
+    gtChk.addEventListener('change',function(){f.inGT=this.checked;renderResults(tabKey);debounceSave();});
+    gtWrap.appendChild(gtChk);
+    gtWrap.appendChild(document.createTextNode('GT'));
+    hdr.appendChild(num);hdr.appendChild(ni);hdr.appendChild(gtWrap);hdr.appendChild(chevron);hdr.appendChild(delBtn);
     hdr.addEventListener('click',function(e){
       if(e.target===ni||e.target===delBtn||delBtn.contains(e.target))return;
       var body=card.querySelector('.feat-body');
@@ -694,37 +703,77 @@ function renderResults(tab){
   var el=document.getElementById('res-'+tab);
   var arr=tab==='sp'?spFeatures:sprFeatures;
   if(arr.length===0){el.innerHTML='<div class="r-empty">📋<br>Add features to see estimates</div>';return;}
-  var html='',gSpr=0,gDays=0,gValid=0;
+
+  // remember GT open state
+  var gtOpen=true;
+  var existing=el.querySelector('.gt-section');
+  if(existing) gtOpen=existing.dataset.open!=='false';
+
+  var html='';
   arr.forEach(function(f,i){
     var r=tab==='sp'?calcSP(f):calcSPR(f);
     var name=(f.name&&f.name.trim())?f.name:'Feature '+(i+1);
-    html+='<div class="re">';
-    html+='<div class="rn">'+esc(name)+'</div>';
+    var gtMark=f.inGT?'<span style="font-size:9px;font-weight:600;color:var(--b2);margin-left:5px;opacity:.7">GT</span>':'';
+    html+='<div class="re" data-fid="'+f.id+'">';
+    html+='<div class="rn">'+esc(name)+gtMark+'</div>';
     if(!r){
       var msg=tab==='sp'?'Enter SP per track':'Enter sprints per track';
       html+='<div style="color:rgba(255,255,255,.3);font-size:11px">'+msg+'</div>';
     } else {
-      gValid++;
-      gSpr+=r.totalBuf;gDays+=r.daysBuf;
       r.tracks.forEach(function(t){
         html+='<div class="rrow"><span class="rl">'+t.name+' Dev</span><span class="rv">'+t.spr.toFixed(1)+' spr</span></div>';
       });
       html+='<div class="rrow"><span class="rl">QA</span><span class="rv">'+(r.qa?r.qa+' spr':'—')+'</span></div>';
       html+='<hr class="rdiv">';
-      html+='<div class="rrow"><span class="rl">Dev Time ('+(f.mode==='parallel'?'parallel':'sequential')+')</span><span class="rv">'+r.devTime.toFixed(1)+' spr</span></div>';
+      html+='<div class="rrow"><span class="rl">Dev Time ('+(f.mode==='parallel'?'∥':'→')+')</span><span class="rv">'+r.devTime.toFixed(1)+' spr</span></div>';
       html+='<div class="rrow"><span class="rl">Total</span><span class="rv" style="color:#66A9D9;font-weight:600">'+r.total.toFixed(1)+' spr</span></div>';
       if(r.sp)html+='<div class="rrow"><span class="rl">Story Points</span><span class="rv">~'+Math.round(r.sp)+' SP</span></div>';
-      if(f.buffer>0)html+='<div class="rrow"><span class="rl">With '+f.buffer+'% buffer</span><span class="rv" style="color:#fcd34d;font-weight:600">'+r.totalBuf.toFixed(1)+' spr</span></div>';
+      if(f.buffer>0)html+='<div class="rrow"><span class="rl">+'+f.buffer+'% buffer</span><span class="rv" style="color:#fcd34d;font-weight:600">'+r.totalBuf.toFixed(1)+' spr</span></div>';
       html+='<div class="rrow"><span class="rl">Calendar Days</span><span class="rv">~'+r.daysBuf+' days</span></div>';
       if(!f.qids.length)html+='<div class="wm we">⚠ No QA assigned</div>';
       if(!f.qaSpr)html+='<div class="wm wy">⚠ No QA time set</div>';
     }
     html+='</div>';
   });
-  if(gValid>1){
-    html+='<div class="tot"><div class="tl">Grand Total ('+gValid+' features)</div><div class="tv">'+gSpr.toFixed(1)+' sprints</div><div class="ts">~'+gDays+' days · '+(gDays/30).toFixed(1)+' months</div></div>';
+
+  // Grand Total section
+  var gtFeatures=arr.filter(function(f){return f.inGT;});
+  var gtSpr=0,gtDays=0;
+  gtFeatures.forEach(function(f){
+    var r=tab==='sp'?calcSP(f):calcSPR(f);
+    if(r){gtSpr+=r.totalBuf;gtDays+=r.daysBuf;}
+  });
+  var openAttr=gtOpen?'true':'false';
+  var bodyDisplay=gtOpen?'block':'none';
+  html+='<div class="gt-section" data-open="'+openAttr+'" style="margin-top:8px">';
+  html+='<div class="gt-hdr" onclick="toggleGT(this)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:rgba(255,255,255,.08);border-radius:6px;border:1px solid rgba(255,255,255,.12)">';
+  html+='<span style="color:var(--bs);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Grand Total</span>';
+  html+='<span style="color:var(--t3);font-size:10px">'+(gtFeatures.length?gtFeatures.length+' feature'+(gtFeatures.length>1?'s':''):'select features above')+'</span>';
+  html+='<span class="gt-chv" style="color:var(--t3);transition:transform .2s;display:inline-block;transform:rotate('+(gtOpen?'180':'0')+'deg)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></span>';
+  html+='</div>';
+  html+='<div class="gt-body" style="display:'+bodyDisplay+'">';
+  if(gtFeatures.length===0){
+    html+='<div style="padding:10px 12px;color:rgba(255,255,255,.3);font-size:11px">Check the GT box on features to include them.</div>';
+  } else {
+    html+='<div class="tot" style="margin-top:0;border-radius:0 0 6px 6px">';
+    html+='<div class="tl">'+gtFeatures.length+' Feature'+(gtFeatures.length>1?'s':'')+'</div>';
+    html+='<div class="tv">'+gtSpr.toFixed(1)+' sprints</div>';
+    html+='<div class="ts">~'+gtDays+' days · '+(gtDays/30).toFixed(1)+' months</div>';
+    html+='</div>';
   }
+  html+='</div></div>';
+
   el.innerHTML=html;
+}
+
+function toggleGT(hdr){
+  var section=hdr.closest('.gt-section');
+  var body=section.querySelector('.gt-body');
+  var chv=hdr.querySelector('.gt-chv');
+  var isOpen=section.dataset.open==='true';
+  section.dataset.open=isOpen?'false':'true';
+  body.style.display=isOpen?'none':'block';
+  chv.style.transform=isOpen?'rotate(0deg)':'rotate(180deg)';
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
